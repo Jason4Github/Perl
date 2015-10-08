@@ -1,0 +1,20 @@
+#!/usr/bin/expect -f
+
+
+set srcFile [lindex $argv 0]
+set user [lindex $argv 1]
+set passwd [lindex $argv 2]
+set tagHost [lindex $argv 3]
+set tagPath [lindex $argv 4]
+	
+	
+spawn scp -r $srcFile $user@$tagHost:$tagPath
+set timeout -1
+expect {
+	"*yes/no*" {send "yes\r"; exp_continue}
+	"*assword*" {send "$passwd\r"; exp_continue}
+	eof {return}
+}
+
+
+

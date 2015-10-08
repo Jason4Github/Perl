@@ -1,0 +1,4 @@
+slc07dtm.us.oracle.com
+slc03nsp.us.oracle.com
+slc03nst.us.oracle.com
+slc03rfg.us.oracle.com;master

@@ -1,0 +1,12 @@
+#!/usr/bin/expect -f
+
+set today [clock format [clock second] -format "%Y_%m_%d"]
+set zipFile "/scratch/tifan/Jason/bark/patch_$today.tgz"
+spawn scp -r $zipFile nowang@slc03nxi.us.oracle.com:/scratch/nowang/haisyu/patchtop/
+set timeout -1
+expect {
+  -timeout -1
+  "*(yes/no)?" { send "yes\r"; exp_continue }
+  "*password*" { send "welcome1\r"; exp_continue }
+  eof { return }
+  }

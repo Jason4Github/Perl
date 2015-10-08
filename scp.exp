@@ -1,0 +1,15 @@
+#!/usr/bin/expect -f
+
+
+set srcFile [lindex $argv 0]
+set targHost [lindex $argv 1]
+spawn scp -r $srcFile wazheng@slc00bqn.us.oracle.com:/scratch/jason_bark_do_NOT_remove/${targHost}_$srcFile
+set timeout -1
+expect {
+	"*yes/no*" {send "yes\r"; exp_continue}
+	"*password*" {send "welcome1\r"; exp_continue}
+	eof {return}
+}
+
+
+

@@ -1,0 +1,9 @@
+
+
+     # 分时日月周命令
+*/1 9-14 * * 1-5 /home/script/shell_getStock.sh
+*/2 9-14 * * 1-5 echo "=========================hey U `date`=========================="  1>> /home/script/crontabs.log 2>&1
+
+50 17 * * 5 /sbin/shutdown -h now
+
+

@@ -1,0 +1,27 @@
+spawn ssh-copy-id -i /scratch/haisyu/.ssh/id_rsa.pub wazheng@slc03rmj.us.oracle.com
+31
+wazheng@slc03rmj.us.oracle.com's password: 
+Now try logging into the machine, with "ssh 'wazheng@slc03rmj.us.oracle.com'", and check in:
+
+  .ssh/authorized_keys
+
+to make sure we haven't added extra keys that you weren't expecting.
+
+spawn ssh-copy-id -i /scratch/wazheng/.ssh/id_rsa.pub haisyu@slc03nui.us.oracle.com
+32
+haisyu@slc03nui.us.oracle.com's password: 
+Now try logging into the machine, with "ssh 'haisyu@slc03nui.us.oracle.com'", and check in:
+
+  .ssh/authorized_keys
+
+to make sure we haven't added extra keys that you weren't expecting.
+
+spawn ssh-copy-id -i /scratch/wazheng/.ssh/id_rsa.pub wazheng@slc03rmj.us.oracle.com
+32
+wazheng@slc03rmj.us.oracle.com's password: 
+Now try logging into the machine, with "ssh 'wazheng@slc03rmj.us.oracle.com'", and check in:
+
+  .ssh/authorized_keys
+
+to make sure we haven't added extra keys that you weren't expecting.
+

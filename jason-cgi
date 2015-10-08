@@ -1,0 +1,161 @@
+#!/usr/bin/perl -w
+
+use strict;
+use CGI;
+
+BEGIN{ 
+    use CGI::Carp qw(fatalsToBrowser carpout set_message);
+    #open(LOG,">>errors.log") or die "Couldn't open log file, $!\n";
+    #carpout(LOG);
+
+    sub handle_errors {
+	my $msg = shift;
+	print "<h1>Software Error Alert!!</h1>";
+	print "<h2>Your program sent this error:<br><I>
+	$msg</h2></I>";
+    }
+    set_message(\&handle_errors);
+    
+}
+
+sub cgi_try {
+
+
+    my $obj = CGI->new;
+    print $obj->header;
+    print $obj->start_html("WELCOM");
+    print $obj->h2("<center>Hello, welcome to Jason's inquery home</center><br>");
+    print <br> x 2, "<hr>";
+    
+    &print_form($obj);
+    &do_work($obj) if ($obj->param);
+
+    print $obj->end_html;
+	  
+
+
+}
+cgi_try;
+
+sub print_form {
+    my $obj = shift;
+
+    print $obj->startform;
+    print "what's your name";
+    print $obj->textfield('name');
+    print "what's your occupation?";
+    print $obj->textfield(-name=>'occupation',
+			  -default=>'software engineer',
+			  -size=>60,
+			  -maxlength=> 100);
+    print $obj->br();
+    print $obj->hr();
+    print "choose your age<br>";
+    print $obj->radio_group(-name => 'age',
+			    -value => ["21-25", "25-30", "30-35", "35-40"],
+			    -default => ["30-35"],
+			    -linebreak => 'TRUE'
+			   );
+    print "<br><hr>";
+#print <<CHECKBOX_GROUP;
+    print "choose your favourite<br>";
+    print $obj->checkbox_group(-name => 'favorite',
+			 -value => ['News', 'Sport', 'Fanancy'],
+			 -default => ['News'],
+			 -linebreak => 'TRUE');
+			 
+#CHECKBOX_GROUP
+    print "<br>";
+    print $obj->submit('action', 'Enter');
+    print $obj->reset();
+
+    print $obj->endform;
+    print $obj->hr();
+
+}
+
+sub do_work {
+    my ($obj) = @_;
+    my (@value, $key);
+
+    print $obj->h2("here are the settings");
+
+    foreach $key($obj->param) {
+	print "$key: \n";
+	@value = $obj->param($key);
+	print join(", ", @value), "<br>";
+    }
+}
+
+no CGI;
+
+
+#print "Content-type: text/html \n\n" ;
+#print "Content-Length: 0\n\n" ;
+
+=off
+print <<HTML;
+        <html>
+        <head><title> Decoding the input data</title></head>
+        <body bgcolor="lavender">
+        <font face="verdana", size="+1">
+HTML
+    print "<H3><U>Query the QUERY_STRING in ENV</U></H3>";
+    $str = `echo "$QUERY_STRING"`;
+    print "$str\n";
+    print "<H2><U>$str</U></H2>";
+
+print <<HTML;
+	</font>
+	</body>
+	</html>
+HTML
+=cut
+
+
+=off
+sub print_welcom_info {
+    print "Content-type: text/html\n\n";
+print <<HTML;
+	<html>
+	<head><title> Decoding the input data</title></head>
+	<body bgcolor="lavender">
+	<font face="verdana", size="+1">
+HTML
+    print "<H3><U>Query the QUERY_STRING in ENV</U></H3>";
+    #get the QUERY_STRING
+    my $input_string = $ENV{QUERY_STRING};
+    #split the key and value by &
+    my @array = split /&/, $input_string;
+    #handle the key and value
+    my %decode;
+    foreach (@array) {
+	#replace plus to blank
+	tr/+/ /;
+	#split the content by =
+	(my $key, my $value) = split /=/;
+	#handle the hex value
+	$key =~ s/%(..)/pack("C", hex $1)/ge;
+	$value =~ s/%(..)/pack("C", hex $1)/ge;
+	$value =~ s/\n/ /g;
+	$value =~ s/\r//g;
+	$value =~ s/\cM//g;
+	$decode{$key} = $value;
+    }
+    print "<hr>";
+    print "<P><B>After decoding</B></P>";
+    while ((my $key, my $value) = each %decode) {
+	print "$key: <I><U>$value</U></I><br>";
+    }
+
+print <<HTML;
+   	<hr>
+	</font>
+   	</body>
+    	</html>
+HTML
+}
+print_welcom_info;
+=cut
+
+exit(0); 

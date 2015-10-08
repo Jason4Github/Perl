@@ -1,0 +1,113 @@
+#!/usr/bin/perl -w 
+
+
+my @ori=qw/agc bcd abc/;
+my @old;
+
+for(@ARGV)
+{
+	print "$_\n";
+	#push @old, $_ if -s $_>10 and -A $_>2;
+	#push @old, $_ if -A $_>2;
+}
+print "old: @old\n";
+
+#$filename="cmd.log";
+#die "$filename didn't exist\n" if -e $filename;
+#warn "$filename was not accessed with 1 day\n" if -M $filename > 1;
+
+#regular file ./s /x /i ; \d \s \w \D \S \W;
+
+#$var="hello world!!";
+#print "$var\n";
+#$var=~s#(\w+)#\u$1#g;
+#print "$var\n";
+
+
+
+
+
+#my %statisticFail=(
+#		"FAIL" => 0,
+#		"PASS" => 0,
+#		"WARN" => 0,
+#);
+
+#my $file=shift @ARGV;
+#print "current file: $ARGV[0]\n";
+
+#foreach(@ARGV)
+#{
+#	$file=$_;
+#	print"current file: $file\n";
+#	open HANDLE_F, $file or die "open file $file failure";
+#	while(<HANDLE_F>)
+#	{
+#        	if(/(\bFAIL\b)+/)
+#        	{
+#                	$statisticFail{"FAIL"} += 1;
+#                	#print "met FAIL $statistic{\"FAIL\"} times\n";
+#                	print "met \"FAIL\" $statisticFail{\"FAIL\"} times in file $file\n";
+#                	#print "$_";
+#        	}
+#        	elsif(/(\bPASS\b)+/)
+#        	{
+#                	$statisticFail{"PASS"} += 1;
+#                	#print "met \"PASS\" $statisticFail{\"PASS\"} times in file $file\n";
+#        	}
+#	}
+#}
+
+
+#while(<>)
+#{
+#	#if(/(\bFAIL$)+/)
+#	if(/(\bFAIL\b)+/)
+#	{
+#		$statisticFail{"FAIL"} += 1;
+#		#print "met FAIL $statistic{\"FAIL\"} times\n";
+#		print "met \"FAIL\" $statisticFail{\"FAIL\"} times\n";
+#		#print "$_";
+#		print;
+#	}
+#	elsif(/(\bPASS\b)+/)
+#	{		
+#		$statisticFail{"PASS"} += 1;
+#		#print "met \"PASS\" $statisticFail{\"PASS\"} times\n";
+#	}
+#}
+
+#$FAIL=$statisticFail{"FAIL"};
+#$PASS=$statisticFail{"PASS"};
+#$WARN=$statisticFail{"WARN"};
+
+#print "fail: $FAIL\npass: $PASS\nwarn: $WARN\n";
+
+
+#while(<>)
+#{
+#	if(/^\w\s(\bFAIL)+/)
+#	{
+#		print "match $1\n";
+#	}
+#	else
+#	{
+#		print "$_";
+#	}
+#}
+
+
+#my %family_name=(
+#	"fred" => "abc",
+#	"dino" => undef,
+#	"barney" => "cba",
+#	"betty" => "rubble",
+#);
+#$family_name{"fred"}="flintstone";
+#$family_name{"barney"}="rubble";
+
+#foreach(qw/fred barney/)
+#{
+#	print "name: $_, family_name: $family_name{$_}\n";
+#}
+

@@ -1,0 +1,392 @@
+#! /bin/env perl
+#
+#
+use warnings;
+#use strict;
+
+use constant FILEUNITSIZE => 10*1024*1024;
+
+sub getCwd {
+	#my $file = `pwd`;
+	#my $file =~ s/[\n\r]//;
+
+	my $file = $ENV{PWD};
+	return "$file";
+}
+
+sub createBigFileDigital {
+	my ($file, $size) = @_;
+
+	open(my $FH, ">$file");
+	
+	my $fileSize = 0;
+	while(1) {
+		my $line = int(rand(999999)) + 1;
+		print $FH "$line\n";
+		print $FH "$fileSize\n";
+		$fileSize += length("$line") + 1 + length("$fileSize") + 1;
+		last if $fileSize >= $size;
+		#last if ((-s $FH) >= $size); ###performance worse than above one algorithm, create 200 files, performance slow 70 secs###
+	}
+						
+	close($FH);
+}
+
+sub createBigFileString {
+	my ($file, $size) = @_;
+
+	open(my $fh, ">$file") || die "create file \"$file\" failure";
+	my $fileSize = 0;
+	my @strArray = (0..9, 'a'..'z', 'A'..'Z');
+	my $strArrayLen = @strArray;
+
+	while(1) {
+		my $strLen = int(rand(10)) + 1;
+		my $string = join("", map({$strArray[int(rand($strArrayLen))]} 1..$strLen));		
+		print $fh "$string\n";
+		$fileSize += $strLen + 1;
+		last if $fileSize >= $size;
+	}
+
+	close($fh);
+}
+
+sub createDir {
+	my $dir = shift;
+
+	-d $dir || mkdir("$dir", 0666) or die "create dir \"$dir\" failure, $!";
+}
+
+sub getDirName {
+	my $path =  shift;
+
+	return substr($path, 0, rindex($path, "/"));
+}
+
+sub getFileName {
+	my $path = shift;
+
+	return substr($path, rindex($path, "/")+1);
+}
+
+sub splitFile {
+	use Carp;
+	use IO::Prompt;
+	
+	my ($fileDir, $fileName, $fileNums) = @_;
+	my $fileFullName = "$fileDir/$fileName";
+
+	printf("\n\tspliting file \"%s\" to %d files\n", $fileFullName, $fileNums);
+	my $answer = prompt("start to bark original file? [y/n]", -ynt);
+
+	if ($answer =~ /[yY]/) {
+		#use File::Copy;
+		#use Cwd;
+		my $destFile = "${fileFullName}.bark";
+		
+		system("cp $fileFullName $destFile");
+		
+		#no Cwd;
+		#no File::Copy;
+	}
+
+	open(FHORI, "<$fileFullName") or die("open file \"$fileFullName\" failure, $!");
+	
+	#create splited files
+	my $splitedDir = "$fileDir/dirSplited";
+	createDir($splitedDir);
+	my @FH;
+	for (my $i=0; $i<$fileNums; $i++) {
+		my $target = "$splitedDir/${fileName}$i";
+		$FH[$i] = "FH$i"; #file handle must be attached to a existent var
+		open($FH[$i], "+>$target") or die "open file \"$target\" failure, $!";
+		#printf("file handle nb: %d\n", fileno($FH[$i])); #for debug
+	}
+	
+	while (1) {
+		read(FHORI, my $bufferRead, 4*1024);
+		if ($bufferRead =~ /^$/) {
+			print "read to the end of the file\n";			
+			last;
+		} else {
+			#if read the content not include a full line
+			if ($bufferRead !~ /[\n\r]$/) {
+				my $pos = tell(FHORI);
+				#print "current file \"$fileFullName\" pos: $pos\n"; #for debug
+				while (my $line=<FHORI>) {
+					$bufferRead .= $line;
+					last if $bufferRead =~ /[\n\r]$/;
+				}
+			}
+		}
+
+		#put all numbers into difference files by the length of the number
+		while($bufferRead =~ /\w+-?\w*/g) {
+			my $line = "$& \n" if defined $&;
+			#### 将指定内容放入指定文件 by 取模算法 ####
+			my $len = length("$line") - 1; #becasue the line include "\n" or "\r", so the length should reduce(-) 1
+			#print "length of the line \"$line\" == $len\n"; #for debug
+			my $num = $len % $fileNums;
+			my $handle = $FH[$num];
+			print $handle "$line";
+		}
+	}
+
+	for (my $i=0; $i<$fileNums; $i++) {
+		close($FH[$i]) or croak "close($FH[$i]) failure, $!";
+	}
+
+	close(FHORI);
+	no IO::Prompt;
+	no Carp;
+
+	print "\nsplit done\n";
+	return "$splitedDir";
+}
+
+sub splitFileBySize {
+	use Carp;
+	
+	my ($fileDir, $fileName, $fileNums) = @_;
+	my $fileFullName = "$fileDir/$fileName";
+	my $fileSize = -s $fileFullName;
+
+	printf("\n\t spliting file \"%s\" to %d files\n", $fileFullName, $fileNums);
+	open(FHORI, "<$fileFullName") or die("open file failure, $!");
+	
+	#create splited files
+	my $splitedDir = "$fileDir/dirSplited";
+	createDir($splitedDir);
+	my @FH;
+	for (my $i=0; $i<$fileNums; $i++) {
+		my $target = "$splitedDir/${fileName}$i";
+		$FH[$i] = "FH$i"; #file handle must be attached to a existent var
+		open($FH[$i], "+>$target") or die "open file \"$target\" failure, $!";
+		#printf("file handle nb: %d\n", fileno($FH[$i]));  #for debug
+	}
+	
+	my $size = 0;
+	my $num = 0;
+	while (1) {
+		read(FHORI, my $bufferRead, 4*1024);
+		if ($bufferRead =~ /^$/) {
+			print "read to the end of the file\n";			
+			last;
+		} else {
+			#if read the content not include a full line
+			if ($bufferRead !~ /[\n\r]$/) {
+				my $pos = tell(FHORI);
+				#print "current file \"$fileFullName\" pos: $pos\n"; #for debug
+				while (my $line=<FHORI>) {
+					$bufferRead .= $line;
+					last if $bufferRead =~ /[\n\r]$/;
+				}
+			}
+		}
+		
+		$size += length("$bufferRead");
+		if($size < FILEUNITSIZE) {	
+			my $handle = $FH[$num];
+			print $handle $bufferRead;
+		} else {
+			$num++;
+			my $handle = $FH[$num];
+			print $handle $bufferRead;
+			$size = 0;	
+		}
+	}
+
+	for (my $i=0; $i<$fileNums; $i++) {
+		close($FH[$i]) or croak "close($FH[$i]) failure, $!";
+	}
+
+	close(FHORI);
+	no Carp;
+
+	print "\nsplit file by size done\n";
+	return "$splitedDir";
+}
+
+############################################################################
+# function: sortFile()
+# description:
+#		This function will sort specified files 
+#		and save the sorted files into specified dir
+# args:
+#		[input]  file dir, dir path, e.g. /home
+#		[input]  file name, e.g. file1
+#		[input]  file numbers, indicate how many files should be handled
+#
+###########################################################################
+sub sortFile {
+	my ($fileDir, $fileName, $sortedDir) = @_;
+	my $filePath = "$fileDir/$fileName";
+	my %fileSorted;
+
+	print "start to sort all spiltted files\n";
+	open(my $FH, "<$filePath") or die "open file \"$filePath\" failure, $!";
+	while (my $line=<$FH>) {
+		$fileSorted{$line}++;
+	}
+	
+	my $fileSortedPath = "$sortedDir/$fileName";
+	open(my $FHNEW, ">$fileSortedPath");
+	for my $key(sort {$fileSorted{$b} <=> $fileSorted{$a}} keys %fileSorted) {
+		print $FHNEW "$fileSorted{$key}", "\t\t\t", "$key";
+	}
+
+	close($FHNEW);
+	close($FH);
+	print "file \"$filePath\" already be sorted\n";
+}
+
+############################################################################
+# function: mapFile()
+# description:
+#		map the big file, split it to many small file, 
+#		the small file size be specified by constant FILEUNITSIZE
+#
+# args:
+#		[input]  file dir, dir path, e.g. /home
+#		[input]  file name, e.g. file1
+#		[input]  file numbers, indicate how many files should be handled
+#		[output] dir path, retutn what the dir include the sorted files 
+#
+###########################################################################
+sub mapFile {
+	my ($fileDir, $fileName, $fileNbs) = @_;
+
+#=off	
+	my $splitedDir = splitFile($fileDir, $fileName, $fileNbs);
+	#my $splitedDir = "$fileDir/dirSplited"; #for debug
+	my $sortedDir = "${splitedDir}Sorted"; 
+	
+	createDir($sortedDir);	
+	for (my $i=0; $i<$fileNbs; $i++) {
+		my $fileFullName = "$splitedDir/${fileName}$i";	
+		my $fileSize = -s $fileFullName;	
+		if ($fileSize == 0) {
+			unlink($fileFullName);
+			print "removed the empty file $fileFullName\n";
+			next;
+		} elsif ($fileSize > FILEUNITSIZE) {
+			my $fileNameSize = "${fileName}$i";
+			print "the file \"$splitedDir/$fileNameSize\" size > 10M, go on spilt it\n";
+			my $fileNbsSize = int($fileSize/FILEUNITSIZE) + 1;
+			my $splitedDirSize = splitFileBySize($splitedDir, $fileNameSize, $fileNbsSize);
+		
+			for(my $j=0; $j<$fileNbsSize; $j++ ) {
+				sortFile($splitedDirSize, "${fileNameSize}$j", $sortedDir);
+			}
+		} else {
+			sortFile($splitedDir, "${fileName}$i", $sortedDir);
+		}
+	}
+
+	print "map file into dir \"$sortedDir\" done\n";
+	return "$sortedDir";
+#=cut
+}
+
+
+############################################################################
+# function: reduceFile()
+# descrition:
+#			reduce the sorted files,
+#			put the top N hot words into a file, 
+#			and return the file's full path.
+# args:
+#		[input]  a dir, which include what you want to be reduced files
+#		[output] a file full path, the file include top N  hot words
+#
+###########################################################################
+sub reduceFile {
+	my $fileDir = shift;
+	my $reduceDir = "${fileDir}Reduce";
+
+	print "start to reduce the sorted files\n";
+	createDir($reduceDir);
+	#get what already be sorted files
+	my @files = `du '$fileDir'/* | sort -n | awk '{print \$NF}'`;
+
+	my $i = 0;
+	my %hash1;
+	foreach my $file (@files) {
+		print "file: $file\n";
+		open(my $FH, $file);
+		my @array;
+		while (my $line= <$FH>) {
+			@array = split(/\s+/, $line);
+			$hash1{$array[1]} += $array[0];
+			#print "top N hot words: $array[1]\t\t$hash1{$array[1]}\n"; #for debug
+			$i++;
+			if ($i >= 1000 || eof) {
+				$i = 0;
+				last;
+			}; #only read 1000 lines
+		}
+		close($FH);
+	}
+	
+	my $reduceFileFull = "$reduceDir/topNHotWords";
+	open(my $fh, ">$reduceFileFull");
+	my @buf;
+	foreach my $key (sort {$hash1{$b}<=>$hash1{$a} or $a cmp $b} keys %hash1) {
+		my $line = sprintf("%-20s%-4d\n", $key, $hash1{$key});
+		push(@buf, $line);
+	}
+	
+	print $fh "@buf";
+	close($fh);
+	print "reduce files into dir \"$reduceDir\" done\n";
+}
+
+sub mapReduceFile {
+	my ($fileDir, $fileName, $fileNums) = @_;
+	my $sortedDir = mapFile($fileDir, $fileName, $fileNums);
+
+	reduceFile($sortedDir);
+}
+
+sub useage {
+	print <<ABC
+		
+		this script is using for find hot words from big size file
+		the top 1000 hot words will be get
+
+		usage: $0 "your file's full path, e.g. /home/file" 
+
+ABC
+}
+
+sub main() {
+	my $inputFile = $ARGV[0];
+	if (! defined $inputFile) {
+		useage();
+		exit;
+	}
+
+	my $fileSizeByte = -s $inputFile;
+	my $fileNums  = int($fileSizeByte/FILEUNITSIZE) + 1;
+
+	print "split file into $fileNums files\n";
+	my $fileDir = getDirName($inputFile);
+	my $fileName = getFileName($inputFile); 
+
+	
+	mapReduceFile($fileDir, $fileName, $fileNums);
+
+
+	#getAndSortWordsReference(); 
+	printf("\n\n\t\tTesting done!\n\n");
+}
+
+
+main();
+
+#my $file = getCwd();
+#createBigFileString("$file/fileBigStringTry", 40*1024*1024);
+
+
+1
+
